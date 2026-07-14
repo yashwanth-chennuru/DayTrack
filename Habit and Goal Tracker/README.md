@@ -2,7 +2,7 @@
 
 A minimalist personal habit and goal tracker with deadline-based WhatsApp-style reminders delivered via Matrix. Built for one person, runs entirely for free.
 
-> Built with [Antigravity](https://antigravity.dev) — an agentic AI coding assistant by Google DeepMind.
+> Built with [Antigravity](https://antigravity.google) — an agentic AI coding assistant by Google DeepMind.
 
 ---
 
