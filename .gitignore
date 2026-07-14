@@ -1,0 +1,15 @@
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Zip/archive files
+*.zip
+*.tar.gz
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log

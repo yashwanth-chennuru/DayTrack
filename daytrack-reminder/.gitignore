@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Environment variables — NEVER commit these
+.env
+.env.local
+
+# Firebase Service Account private key — NEVER commit this
+service-account.json
+
+# Runtime state file (tracks sent reminders)
+sent.json
+
+# Logs
+*.log
+reminder.log
+
+# OS
+.DS_Store
+Thumbs.db
