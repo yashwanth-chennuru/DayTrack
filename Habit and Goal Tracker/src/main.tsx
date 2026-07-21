@@ -3,9 +3,16 @@
   import { AuthProvider } from "./app/AuthProvider";
   import App from "./app/App.tsx";
   import "./styles/index.css";
+  import DesktopAuthCatcher from "./app/DesktopAuthCatcher";
 
-  createRoot(document.getElementById("root")!).render(
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  );
+  const root = createRoot(document.getElementById("root")!);
+
+  if (window.location.pathname === "/desktop-login") {
+    root.render(<DesktopAuthCatcher />);
+  } else {
+    root.render(
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    );
+  }

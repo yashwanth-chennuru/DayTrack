@@ -20,6 +20,7 @@ A minimalist personal habit and goal tracker with deadline-based WhatsApp-style 
 | Layer | Tech | Cost |
 |---|---|---|
 | **Frontend** | React + Vite + TypeScript | Free |
+| **Desktop App** | Tauri + Rust | Free |
 | **Hosting** | Firebase Hosting | Free (Spark plan) |
 | **Database** | Firestore | Free (Spark plan) |
 | **Auth** | Firebase Google Sign-In | Free |
@@ -324,7 +325,7 @@ npx firebase deploy --only functions --project your-project-id
 
 ```
 New Tracker/
-├── Habit and Goal Tracker/      # The React web app
+├── Habit and Goal Tracker/      # The React web app + Tauri Desktop App
 │   ├── src/
 │   │   └── app/
 │   │       ├── App.tsx          # Main UI + deadline logic
@@ -333,6 +334,7 @@ New Tracker/
 │   │       └── hooks/
 │   │           ├── useFirestoreItems.ts  # Firestore read/write
 │   │           └── firebase.ts           # Firebase init
+│   ├── src-tauri/               # The Rust codebase for the macOS Desktop App
 │   ├── .env.example             # Template — copy to .env and fill in
 │   ├── firebase.json            # Firebase Hosting config
 │   └── firestore.rules          # Firestore security rules

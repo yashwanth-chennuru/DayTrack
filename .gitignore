@@ -13,3 +13,6 @@
 
 # Logs
 *.log
+
+# Deprecated folders
+DayTrack Mac Deprecated/

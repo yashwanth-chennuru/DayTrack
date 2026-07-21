@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Plus, Trash2, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { format, addDays, subDays, isToday } from "date-fns";
 import { AuthProvider, useAuth } from "./AuthProvider";
@@ -35,6 +35,151 @@ function dateKey(d: Date) {
 
 function uid() {
   return Math.random().toString(36).slice(2, 9);
+}
+
+// Custom cross-browser TimePicker (no native <input type="time">)
+function TimePicker({ value, onChange, accent }: { value: string; onChange: (v: string) => void; accent: string }) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+
+  // Parse current value (24h "HH:MM") into hour12, minute, period
+  const parsed = value ? value.split(":") : null;
+  let hour12 = parsed ? parseInt(parsed[0], 10) : 12;
+  let period = parsed ? (hour12 >= 12 ? "PM" : "AM") : "AM";
+  let minute = parsed ? parsed[1] : "00";
+  if (parsed) {
+    hour12 = hour12 % 12 || 12;
+  }
+
+  useEffect(() => {
+    if (open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setPos({
+        top: rect.top - 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [open]);
+
+  // Close popup when clicking outside
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node) &&
+          btnRef.current && !btnRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  function update(h12: number, min: string, p: string) {
+    let h24 = h12 % 12;
+    if (p === "PM") h24 += 12;
+    const val = `${h24.toString().padStart(2, "0")}:${min}`;
+    onChange(val);
+  }
+
+  const selectStyle: React.CSSProperties = {
+    appearance: "none",
+    WebkitAppearance: "none",
+    background: "var(--input-background, #f5f5f0)",
+    border: "1px solid var(--border, #e5e5e5)",
+    borderRadius: 6,
+    padding: "4px 8px",
+    fontSize: 12,
+    fontFamily: "monospace",
+    color: "var(--foreground, #1a1a18)",
+    cursor: "pointer",
+    outline: "none",
+    textAlign: "center" as const,
+  };
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex-shrink-0 bg-input-background rounded-lg px-2 py-2 text-xs font-mono transition-all cursor-pointer flex items-center gap-1"
+        style={{
+          color: value ? "var(--foreground)" : "var(--muted-foreground)",
+          border: open ? `1.5px solid ${accent}` : "1px solid transparent",
+        }}
+        title="Set deadline"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        {value ? `${hour12}:${minute} ${period}` : "Time"}
+      </button>
+
+      {open && (
+        <div
+          ref={popupRef}
+          className="bg-card border border-border rounded-xl shadow-lg p-3 flex items-center gap-1.5"
+          style={{
+            position: "fixed",
+            top: pos.top,
+            right: pos.right,
+            transform: "translateY(-100%)",
+            zIndex: 9999,
+            minWidth: 180,
+          }}
+        >
+          {/* Hour */}
+          <select
+            style={selectStyle}
+            value={hour12}
+            onChange={(e) => update(parseInt(e.target.value, 10), minute, period)}
+          >
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+              <option key={h} value={h}>{h}</option>
+            ))}
+          </select>
+
+          <span className="text-xs font-bold text-muted-foreground">:</span>
+
+          {/* Minute */}
+          <select
+            style={selectStyle}
+            value={minute}
+            onChange={(e) => update(hour12, e.target.value, period)}
+          >
+            {Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, "0")).map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+
+          {/* AM/PM */}
+          <select
+            style={selectStyle}
+            value={period}
+            onChange={(e) => update(hour12, minute, e.target.value)}
+          >
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
+
+          {/* Clear button */}
+          {value && (
+            <button
+              type="button"
+              onClick={() => { onChange(""); setOpen(false); }}
+              className="text-xs text-muted-foreground hover:text-destructive ml-1 transition-colors"
+              title="Clear time"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      )}
+    </>
+  );
 }
 
 interface PanelProps {
@@ -177,21 +322,14 @@ function Panel({ label, accent, date, kind }: PanelProps) {
       <div className="px-4 py-3 border-t border-border">
         <div className="flex gap-2 items-center">
           <input
-            className="flex-1 bg-input-background rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 placeholder:text-muted-foreground/60 transition-all"
+            className="flex-1 min-w-0 bg-input-background rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 placeholder:text-muted-foreground/60 transition-all"
             style={{ "--tw-ring-color": accent } as React.CSSProperties}
             placeholder={`Add ${kind === "habits" ? "habit" : "goal"}…`}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && add()}
           />
-          <input
-            type="time"
-            value={deadline}
-            onChange={(e) => setDeadline(e.target.value)}
-            className="bg-input-background rounded-lg px-2 py-2 text-xs font-mono outline-none focus:ring-2 transition-all text-muted-foreground cursor-pointer"
-            style={{ "--tw-ring-color": accent } as React.CSSProperties}
-            title="Optional deadline"
-          />
+          <TimePicker value={deadline} onChange={setDeadline} accent={accent} />
           <button
             onClick={add}
             disabled={!draft.trim()}
